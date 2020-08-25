@@ -1,0 +1,48 @@
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Create Application user
+  import_role:
+    name: os-configs
+    tasks_from: appuser.yml
+
+- name: Download artifacts from nexus for {{APPLICATION_USER}} service
+  import_role:
+    name: os-configs
+    tasks_from: download-latest.yml
+
+- name: Copy artifacts to Directory
+  get_url:
+    url: "{{latest.stdout}}"
+    dest: "{{APPLICATION_HOME}}/dispatch"
+    mode: 0755
+  become_user: "{{APPLICATION_USERNAME}}"
+
+- name: Set Up Systemd
+  import_role:
+    name: os-configs
+    tasks_from: systemd
+  vars:
+    COMMAND: "{{APPLICATION_HOME}}/{{APPLICATION_NAME}}"
+
+- name: Set up System dependencies
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: dispatch
+  loop:
+    - RABBITMQ_HOST
+
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: '/var/log/roboshop/dispatch.log',app_name: 'dispatch'}
+
+

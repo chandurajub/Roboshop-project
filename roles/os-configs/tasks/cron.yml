@@ -1,0 +1,22 @@
+- name: Remove cron file to disable shut down
+  file:
+    path: /var/spool/cron/root
+    state: absent
+
+- name: Disbale PS1 script
+  file:
+    path: /etc/profile.d/ps1.sh
+    state: absent
+
+- name: Setup Syslog
+  template:
+    src: rsyslog.conf
+    dest: /etc/rsyslog.d/01-roboshop.conf
+
+- name: Start syslog
+  service:
+    enabled: yes
+    state: restarted
+    name: rsyslog
+    daemon-reload: yes
+

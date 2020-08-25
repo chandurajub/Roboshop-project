@@ -1,0 +1,25 @@
+- name: Curl a nodejs webpage
+  shell: curl -s https://nodejs.org/en/download/ | xargs -n1 | grep linux-x64.tar | sed -e 's|=| |g' -e 's|>| |g'| xargs -n1 | grep ^http
+  register: out
+
+- name: Get the Directory name
+  set_fact:
+    NODEJS_DOWNLOADED_DIRECTORY: "{{out.stdout.split('/')[-1]|regex_replace('.tar.xz','')}}"
+
+- name: Check NodeJS is already exists or not
+  stat:
+    path: /opt/{{NODEJS_DOWNLOADED_DIRECTORY}}
+  register: st
+
+- name: Unarchive a node js file
+  unarchive:
+    src: "{{out.stdout}}"
+    dest: /opt
+    remote_src: yes
+  when: not st.stat.exists | bool
+
+- name: Create a link with standard directory
+  file:
+    src: /opt/{{NODEJS_DOWNLOADED_DIRECTORY}}
+    dest: "{{NODEJS}}"
+    state: link

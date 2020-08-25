@@ -1,0 +1,33 @@
+- name: Setup User Application
+  import_role:
+    name: nodejs-app
+  vars:
+    DOWNLOAD_LATEST: true
+    APPLICATION_NAME: user
+
+- name: Set up application dependencies
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: user
+  loop:
+    - MONGO_URL
+    - REDIS_HOST
+
+- name: Systemd Daemon-reload
+  systemd:
+    daemon_reload: yes
+
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: "/var/log/roboshop/user.log",app_name: "user"}

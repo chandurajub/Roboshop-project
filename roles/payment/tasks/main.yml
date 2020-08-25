@@ -1,0 +1,77 @@
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Create Application user and directory
+  import_role:
+    name: os-configs
+    tasks_from: appuser
+
+
+- name: Install Python packages
+  package:
+    name: "{{item}}"
+    state: present
+  loop:
+    - python36
+    - gcc
+    - python3-devel
+
+- name: Download artifacts from Nexus
+  import_role:
+    name: os-configs
+    tasks_from: download-latest.yml
+
+- name: Copy Artifacts to Directory
+  unarchive:
+    src: "{{latest.stdout}}"
+    dest: "{{APPLICATION_HOME}}"
+    remote_src: yes
+
+- name: Download dependencies
+  pip:
+    requirements: "{{APPLICATION_HOME}}/requirements.txt"
+    executable: pip3
+
+- name: Create a log directory
+  file:
+    path: /var/log/{{APPLICATION_USERNAME}}
+    state: directory
+
+- name: Copy the {{APPLICATION_NAME}}.service file to system location
+  template:
+    src: systemd
+    dest: /etc/systemd/system/{{APPLICATION_NAME}}.service
+
+- name: Setup Dependency Variables in SystemD
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: payment
+    R_USERNAME: "{{RUSERNAME}}"
+    R_PASSWORD: "{{RPASSWORD}}"
+  loop:
+    - "RABBITMQ_HOST"
+    - "CART_HOST"
+    - "USER_HOST"
+    - "RUSERNAME"
+    - "RPASSWORD"
+
+- name: Restart Service
+  systemd:
+    name: "{{APPLICATION_NAME}}"
+    state: restarted
+    daemon-reload: yes
+    enabled: yes
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: "/var/log/roboshop/payment.log",app_name: "payment"}
+
+

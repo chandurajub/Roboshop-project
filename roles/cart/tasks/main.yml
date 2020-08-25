@@ -1,0 +1,37 @@
+- name: Set up cart application
+  import_role:
+    name: nodejs-app
+  vars:
+    DOWNLOAD_LATEST: true
+    APPLICATION_NAME: cart
+
+- name: Set up the system dependencies
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: cart
+  loop:
+    - REDIS_HOST
+    - CATALOGUE_HOST
+
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+    - { log_file: '/var/log/roboshop/cart.log' ,app_name: 'cart' }
+    LOG_TEMPLATE: "nodejs"
+
+- name: Monitor the service
+  include_role:
+    name: newrelic
+  vars:
+    ALERT_NAME: "cart"
+    POLICY_ID: "794707"

@@ -1,0 +1,52 @@
+- name: Create Application User
+  import_role:
+    name: os-configs
+    tasks_from: appuser
+
+- name: Install Java
+  yum:
+    name: java
+    state: latest
+
+- name: Download artifacts from Nexus
+  import_role:
+    name: os-configs
+    tasks_from: download-latest.yml
+
+- name: Copy the artifacts
+  get_url:
+    url: "{{latest.stdout}}"
+    dest: "{{APPLICATION_HOME}}/shipping.jar"
+    mode: '0755'
+  become_user: "{{APPLICATION_USERNAME}}"
+
+- name: Start the Service
+  import_role:
+    name: os-configs
+    tasks_from: systemd.yml
+  vars:
+    COMMAND: /usr/bin/nohup java -jar {{APPLICATION_HOME}}/shipping.jar
+
+- name: Set up system dependencies for shipping
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: shipping
+  loop:
+    - CART_ENDPOINT
+    - DB_HOST
+
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: "/var/log/roboshop/shipping.log",app_name: "shipping"}
+

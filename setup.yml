@@ -1,0 +1,55 @@
+- name: Set up Roboshop application
+  hosts: all
+  gather_facts: True
+  become: yes
+  tasks:
+    - name: Import User component
+      import_role:
+        name: user
+      tags:
+        - user
+    - name: Import Catalogue component
+      import_role:
+        name: catalogue
+      tags:
+        - catalogue
+    - name: Import cart component
+      import_role:
+        name: cart
+      tags:
+        - cart
+    - name: Import Dispatch component
+      import_role:
+        name: dispatch
+      tags:
+        - dispatch
+    - name: Import Shipping Component
+      import_role:
+        name: shipping
+      tags:
+        - shipping
+    - name: Import Payment Component
+      import_role:
+        name: payment
+      tags:
+        - payment
+    - name: Import Ratings Component
+      import_role:
+        name: ratings
+      tags:
+        - ratings
+    - name: Import frontend Component
+      import_role:
+        name: frontend
+      tags:
+        - frontend
+    - name: Import mongodb Component
+      import_role:
+        name: mongodb
+      tags:
+        - mongodb
+    - name: Import rabbitmq Component
+      import_role:
+        name: rabbitmq
+      tags:
+        - rabbitmq

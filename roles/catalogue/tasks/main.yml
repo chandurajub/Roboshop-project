@@ -1,0 +1,29 @@
+- name: Set up catalogue application
+  import_role:
+    name: nodejs-app
+  vars:
+    DOWNLOAD_LATEST: true
+    APPLICATION_NAME: catalogue
+
+- name: Set up application dependencies
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: catalogue
+  loop:
+    - MONGO_URL
+
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - { log_file: '/var/log/roboshop/catalogue.log',app_name: 'catalogue'}
+

@@ -1,0 +1,4 @@
+- name: Get the latest artifact from Nexus
+  shell: curl -s {{NEXUS_URL}} |grep {{APPLICATION_NAME}}-service- | awk -F \" '{ print $2 }' | tail -1
+  register: latest
+  become_user: "{{APPLICATION_USERNAME}}"

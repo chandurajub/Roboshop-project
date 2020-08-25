@@ -1,0 +1,53 @@
+- name: Install nginx
+  package:
+    name: nginx
+    state: installed
+
+- name: Copy the config file to /etc/nginx/nginx.conf
+  template:
+    src: nginx-localhost.conf
+    dest: /etc/nginx/nginx.conf
+
+- name: Find the files under /usr/share/nginx/html
+  find:
+    paths: /usr/share/nginx/html
+    file_type: any
+  register: find
+
+- name: Remove all the files under /usr/share/nginx/html
+  file:
+    path: "{{item.path}}"
+    state: absent
+  loop: "{{find.files}}"
+
+- name: Download the latest artifacts
+  import_role:
+    name: os-configs
+    tasks_from: download-latest
+  vars:
+    APPLICATION_USERNAME: root
+
+- name: Copy the artifacts to /usr/share/nginx/html
+  unarchive:
+    src: "{{latest.stdout}}"
+    dest: /usr/share/nginx/html
+    remote_src: yes
+
+- name: Start nginx server
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: '/var/log/nginx/access.log' ,app_name: 'frontend-access'}
+      - {log_file:  '/var/log/nginx/error.log',app_name: 'frontend-error'}

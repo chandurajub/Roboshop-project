@@ -1,0 +1,28 @@
+filebeat.inputs:
+  {% for config in CONFIGS %}
+  - type: log
+      enabled: true
+      paths:
+        - {{config.log_file}}
+      fields:
+        appName: {{config.app_name}}
+      multiline.pattern: '^.*\{\"name\"|\"level\"'
+      multiline.negate: true
+      multiline.match: after
+    {% endfor %}
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+output.logstash:
+  hosts: ["{{LOGSTASH}}:5044"]
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~

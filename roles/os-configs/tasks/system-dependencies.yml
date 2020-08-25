@@ -1,0 +1,98 @@
+- name: Set up MONGO_URL for user service
+  when: VARIABLE == "MONGO_URL" and APPLICATION_NAME == "user"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="MONGO_URL=mongodb://mongodb-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}:27017/users"
+
+- name: Set up REDIS_HOST
+  when: VARIABLE == "REDIS_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="REDIS_HOST=redis-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Set up MONGO_URL for catalogue service
+  when: VARIABLE == "MONGO_URL" and APPLICATION_NAME == "catalogue"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="MONGO_URL=mongodb://mongodb-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}:27017/catalogue"
+
+- name: Set up RABBITMQ_HOST
+  when: VARIABLE == "RABBITMQ_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="RABBITMQ_HOST=rabbitmq-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Set up CATALOGUE_HOST
+  when: VARIABLE == "CATALOGUE_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="CATALOGUE_HOST=catalogue-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Set up CART_HOST
+  when: VARIABLE == "CART_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="CART_HOST=cart-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Set up USER_HOST
+  when: VARIABLE == "USER_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="USER_HOST=user-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Set up DB_HOST
+  when: VARIABLE == "DB_HOST"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    insertbefore: '^ExecStart'
+    line: Environment="DB_HOST=mysql-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+
+- name: Add RabbitMQ Username
+  when: VARIABLE == "RUSERNAME"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    line: Environment="RUSERNAME={{R_USERNAME}}"
+    insertbefore: "^ExecStart"
+
+- name: Add RabbitMQ Password
+  when: VARIABLE == "RPASSWORD"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    line: Environment="RPASSWORD={{R_PASSWORD}}"
+    insertbefore: "^ExecStart"
+
+- name: Add Cart endpoint Host Dependency
+  when: VARIABLE == "CART_ENDPOINT"
+  lineinfile:
+    path: /etc/systemd/system/{{APPLICATION_NAME}}.service
+    line: Environment="CART_ENDPOINT=cart-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}"
+    insertbefore: "^ExecStart"
+
+- name: Add catalogue_url as host dependency
+  when: VARIABLE == "CATALOGUE_URL"
+  lineinfile:
+    path: /usr/lib/systemd/system/httpd.service
+    line: Environment="CATALOGUE_URL=http://catalogue-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}}:7001/"
+    insertbefore: "^ExecStart"
+
+- name: Add PDO_url as host dependency
+  when: VARIABLE == "PDO_URL"
+  lineinfile:
+    path: /usr/lib/systemd/system/httpd.service
+    line: Environment="PDO_URL=mysql:host=mysql-roboshop-{{APPLICATION_ENVIRONMENT}}.{{DNS_DOMAIN_NAME}};dbname=ratings;charset=utf8mb4"
+    insertbefore: "^ExecStart"
+
+
+- name: Restart Service
+  systemd:
+    name: "{{APPLICATION_NAME}}"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes

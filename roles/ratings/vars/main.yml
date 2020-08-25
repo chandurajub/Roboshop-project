@@ -1,0 +1,4 @@
+APPLICATION_NAME: ratings
+APPLICATION_USERNAME: roboshop
+NEXUS_URL: "https://nexus.devops46.online/service/rest/repository/browse/{{APPLICATION_NAME}}-service/"
+APPLICATION_HOME: /home/{{APPLICATION_USERNAME}}/{{APPLICATION_NAME}}

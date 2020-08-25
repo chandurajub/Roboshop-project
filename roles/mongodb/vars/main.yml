@@ -1,0 +1,2 @@
+APPLICATION_NAME: mongodb
+NEXUS_URL: "https://nexus.devops46.online/service/rest/repository/browse/{{APPLICATION_NAME}}-service/"

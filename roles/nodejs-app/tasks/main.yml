@@ -1,0 +1,28 @@
+- name: Create Application user and directory
+  import_role:
+    name: os-configs
+    tasks_from: appuser.yml
+
+- name: Setup Latest  APP
+  when: DOWNLOAD_LATEST
+  import_role:
+    name: os-configs
+    tasks_from: download-latest.yml
+
+
+- name: Extract the artifacts
+  unarchive:
+    src: "{{latest.stdout}}"
+    dest: "{{APPLICATION_HOME}}"
+    remote_src: yes
+
+- name: Setup Systemd Service
+  import_role:
+    name: os-configs
+    tasks_from: systemd.yml
+  vars:
+    COMMAND: /opt/nodejs/bin/node {{APPLICATION_HOME}}/server.js
+
+
+
+

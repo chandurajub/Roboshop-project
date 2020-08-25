@@ -1,0 +1,89 @@
+- name: Copy the rsyslog file
+  include_role:
+    name: os-configs
+    tasks_from: cron
+
+- name: install the latest version of Apache
+  yum:
+    name: "{{item}}"
+    state: installed
+  loop:
+    - httpd
+    - http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    - yum-utils
+
+- name: Install PHP
+  yum:
+    name: "{{item}}"
+    state: installed
+    enablerepo: "remi-php73"
+  loop:
+    - php
+    - php-opcache
+    - php73-php-pdo
+    - composer
+
+
+- name: Change the line
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen'
+    line: Listen 7004
+
+- name: Copy the status.conf file
+  template:
+    src: status.conf
+    dest: /etc/httpd/conf.d/
+
+- name: Find existing files
+  find:
+    paths: /var/www/html
+    file_type: any
+  register: find
+
+- name: Remove Files
+  file:
+    path: "{{item.path}}"
+    state: absent
+  loop: "{{find.files}}"
+
+- name: Download the artifacts from Nexus
+  import_role:
+    name: os-configs
+    tasks_from: download-latest.yml
+  vars:
+    APPLICATION_USERNAME: root
+
+- name: Copy artifacts to /var/www/html
+  unarchive:
+    src: "{{latest.stdout}}"
+    dest: /var/www/html
+    remote_src: yes
+
+- name: Install php dependenices
+  composer:
+    command: install
+    working_dir: /var/www/html
+
+- name: Setup Dependency Variables in SystemD
+  include_role:
+    name: os-configs
+    tasks_from: system-dependencies
+  vars:
+    VARIABLE: "{{item}}"
+    APPLICATION_NAME: httpd
+  loop:
+    - "PDO_URL"
+    - "CATALOGUE_URL"
+
+- name: Start the httpd service
+  service:
+    name: httpd
+    state: restarted
+
+- name: Call the filebeat module
+  include_role:
+    name: filebeat
+  vars:
+    CONFIGS:
+      - {log_file: "/var/log/httpd/access_log",app_name: "ratings"}

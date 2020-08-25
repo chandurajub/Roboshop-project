@@ -1,0 +1,20 @@
+- name: Copy the {{APPLICATION_NAME}}.service file to system location
+  template:
+    src: systemd
+    dest: /etc/systemd/system/{{APPLICATION_NAME}}.service
+
+- name: Systemd Daemon-reload
+  systemd:
+    daemon_reload: yes
+
+- name: Create a log directory
+  file:
+    path: /var/log/{{APPLICATION_USERNAME}}
+    state: directory
+
+- name: Restart Service
+  systemd:
+    name: "{{APPLICATION_NAME}}"
+    state: restarted
+    enabled: yes
+

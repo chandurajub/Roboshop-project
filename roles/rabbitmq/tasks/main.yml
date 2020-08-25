@@ -1,0 +1,30 @@
+- name: Install Erlang
+  yum:
+   name: https://packages.erlang-solutions.com/erlang/rpm/centos/7/x86_64/esl-erlang_22.2.1-1~centos~7_amd64.rpm
+   state: installed
+
+- name: Install rabbit Mq server repository
+  shell: curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
+
+- name: Install rabbitmq
+  yum:
+    name: rabbitmq-server
+    state: installed
+
+- name: Restart Service
+  systemd:
+    name: rabbitmq-server
+    state: restarted
+    enabled: yes
+
+- name: Create Application user
+  debug:
+    msg: RUSERNAME is {{RUSERNAME}}
+
+- name: Create Application user
+  shell: rabbitmqctl add_user {{RUSERNAME}} {{RPASSWORD}};rabbitmqctl set_user_tags {{RUSERNAME}} administrator;rabbitmqctl set_permissions -p / {{RUSERNAME}} ".*" ".*" ".*"
+  ignore_errors: yes
+
+- name: Reset the password
+  shell: rabbitmqctl change_password {{RUSERNAME}} {{RPASSWORD}}
+

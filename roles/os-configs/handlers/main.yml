@@ -1,0 +1,6 @@
+- name: Restart Service
+  systemd:
+    name: "{{APPLICATION_NAME}}"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes

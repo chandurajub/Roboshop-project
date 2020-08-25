@@ -1,0 +1,38 @@
+- name: Copy the mongo-org.repo file
+  template:
+    src: mongo-org.repo
+    dest: /etc/yum.repos.d/mongodb-org-4.2.repo
+
+- name: Install Mongo DB
+  yum:
+    name: mongodb-org
+    state: installed
+
+- name: Update MongoDB Listen Address
+  replace:
+    path: /etc/mongod.conf
+    regexp: '127.0.0.1'
+    replace: '0.0.0.0'
+
+- name : Start Mongodb service
+  service:
+    name: mongod
+    state: started
+    enabled: yes
+
+- name: Get the latest artifact from Nexus
+  shell: curl -s {{NEXUS_URL}} |grep {{APPLICATION_NAME}}-service- | awk -F \" '{ print $2 }' | tail -1
+  register: latest
+
+- name: Copy the artifacts
+  unarchive:
+    src: "{{latest.stdout}}"
+    dest: "/tmp/"
+    remote_src: yes
+
+- name: Load the schema
+  shell: mongo "{{item}}"
+  loop:
+    - "/tmp/users.js"
+    - "/tmp/catalogue.js"
+  ignore_errors: yes
